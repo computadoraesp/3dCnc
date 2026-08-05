@@ -1,0 +1,39 @@
+# Android Studio / IntelliJ
+.idea/
+*.iml
+
+# Gradle
+.gradle/
+build/
+**/build/
+
+# Local config
+local.properties
+*.keystore
+*.jks
+
+# NDK / Native
+.externalNativeBuild/
+.cxx/
+obj/
+
+# Captures
+captures/
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Kotlin / Java
+*.class
+*.kotlin_module
+*.jar
+*.war
+*.ear
+
+# Misc
+*.hprof
+.vscode/
