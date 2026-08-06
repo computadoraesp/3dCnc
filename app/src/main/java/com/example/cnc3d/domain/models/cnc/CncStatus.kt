@@ -1,5 +1,7 @@
 package com.example.cnc3d.domain.models.cnc
 
+import com.example.cnc3d.core.network.ConnectionType
+
 data class CncStatus(
     val state: String = "Unknown",
     val position: Triple<Float, Float, Float> = Triple(0f, 0f, 0f),
@@ -10,7 +12,8 @@ data class CncStatus(
     val mdiHistory: List<String> = emptyList(),
     val activeOffset: String = "G54",
     val firmwareVersion: String = "Unknown",
-    val uptime: String = "00:00:00"
+    val uptime: String = "00:00:00",
+    val connectionType: ConnectionType? = null
 ) {
     companion object {
         val DISCONNECTED = CncStatus(

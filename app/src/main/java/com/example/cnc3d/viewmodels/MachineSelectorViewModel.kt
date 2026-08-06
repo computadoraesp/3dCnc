@@ -3,15 +3,17 @@ package com.example.cnc3d.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.cnc3d.core.detection.FirmwareType
+import com.example.cnc3d.core.network.ConnectionType
 import com.example.cnc3d.domain.models.MachineProfile
 import com.example.cnc3d.domain.repositories.MachineProfileRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-import com.example.cnc3d.core.network.ConnectionType
-
-class MachineSelectorViewModel(
+@HiltViewModel
+class MachineSelectorViewModel @Inject constructor(
     private val repo: MachineProfileRepository
 ) : ViewModel() {
 

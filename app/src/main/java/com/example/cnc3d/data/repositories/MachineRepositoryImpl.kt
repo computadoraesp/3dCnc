@@ -1,14 +1,20 @@
 package com.example.cnc3d.data.repositories
 
+import android.content.Context
 import com.example.cnc3d.core.detection.FirmwareDetector
 import com.example.cnc3d.core.detection.FirmwareType
-import com.example.cnc3d.core.network.*
+import com.example.cnc3d.core.network.BluetoothTransport
+import com.example.cnc3d.core.network.ConnectionManager
+import com.example.cnc3d.core.network.ConnectionTransport
+import com.example.cnc3d.core.network.ConnectionType
+import com.example.cnc3d.core.network.NetworkTransport
+import com.example.cnc3d.core.network.UsbTransport
 import com.example.cnc3d.core.websocket.EventStream
 import com.example.cnc3d.data.datasources.FluidncDataSource
 import com.example.cnc3d.data.datasources.MoonrakerDataSource
 import com.example.cnc3d.domain.models.Event
+import com.example.cnc3d.domain.models.cnc.CncStatus
 import com.example.cnc3d.domain.repositories.MachineRepository
-import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -26,8 +32,10 @@ class MachineRepositoryImpl @Inject constructor(
 ) : MachineRepository {
 
     private var firmware: FirmwareType = FirmwareType.UNKNOWN
+    private var currentType: ConnectionType? = null
 
     override suspend fun connect(address: String, type: ConnectionType): Boolean {
+        currentType = type
         val transport: ConnectionTransport = when (type) {
             ConnectionType.WIFI -> {
                 val baseUrl = if (address.startsWith("http")) address else "http://$address"
@@ -61,10 +69,16 @@ class MachineRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getStatus(): Any {
-        return when (firmware) {
+        val status = when (firmware) {
             FirmwareType.FLUIDNC -> fluidnc!!.getStatus()
             FirmwareType.MOONRAKER -> moonraker!!.getStatus()
-            else -> "Unknown firmware"
+            else -> return "Unknown firmware"
+        }
+
+        return if (status is CncStatus) {
+            status.copy(connectionType = currentType)
+        } else {
+            status
         }
     }
 

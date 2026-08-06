@@ -19,11 +19,24 @@ class BluetoothScanner(private val context: Context) {
 
     @SuppressLint("MissingPermission")
     fun scanDevices(): Flow<BluetoothDevice> = callbackFlow {
+        if (adapter == null || !adapter.isEnabled) {
+            close()
+            return@callbackFlow
+        }
+
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
                 when (intent.action) {
                     BluetoothDevice.ACTION_FOUND -> {
-                        val device: BluetoothDevice? = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
+                        val device: BluetoothDevice? = if (android.os.Build.VERSION.SDK_INT >= 33) {
+                            intent.getParcelableExtra(
+                                BluetoothDevice.EXTRA_DEVICE,
+                                BluetoothDevice::class.java
+                            )
+                        } else {
+                            @Suppress("DEPRECATION")
+                            intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
+                        }
                         device?.let { trySend(it) }
                     }
                 }
@@ -32,11 +45,28 @@ class BluetoothScanner(private val context: Context) {
 
         val filter = IntentFilter(BluetoothDevice.ACTION_FOUND)
         context.registerReceiver(receiver, filter)
-        adapter?.startDiscovery()
+
+        try {
+            if (!adapter.startDiscovery()) {
+                close()
+            }
+        } catch (e: SecurityException) {
+            close(e)
+        }
 
         awaitClose {
-            adapter?.cancelDiscovery()
-            context.unregisterReceiver(receiver)
+            try {
+                if (adapter.isDiscovering) {
+                    adapter.cancelDiscovery()
+                }
+            } catch (e: SecurityException) {
+                // Ignore cleanup errors
+            }
+            try {
+                context.unregisterReceiver(receiver)
+            } catch (e: IllegalArgumentException) {
+                // Already unregistered
+            }
         }
     }
 }

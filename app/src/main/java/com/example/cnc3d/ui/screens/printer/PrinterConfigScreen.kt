@@ -1,13 +1,20 @@
 package com.example.cnc3d.ui.screens.printer
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.cnc3d.ui.theme.*
+import com.example.cnc3d.ui.theme.IndustrialButton
+import com.example.cnc3d.ui.theme.IndustrialColors
+import com.example.cnc3d.ui.theme.IndustrialPanel
 import com.example.cnc3d.viewmodels.PrinterViewModel
 
 @Composable
@@ -44,18 +51,6 @@ fun PrinterConfigScreen(viewModel: PrinterViewModel) {
         IndustrialPanel(title = "System Tuning") {
             IndustrialButton("PID Tune Hotend", onClick = { viewModel.sendMdi("PID_CALIBRATE HEATER=extruder TARGET=200") }, modifier = Modifier.fillMaxWidth())
             IndustrialButton("PID Tune Bed", onClick = { viewModel.sendMdi("PID_CALIBRATE HEATER=heater_bed TARGET=60") }, modifier = Modifier.fillMaxWidth().padding(top = 8.dp))
-        }
-
-        IndustrialPanel(title = "Interface Settings") {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                Text("UI Language", color = IndustrialColors.TextSecondary)
-                Text("ENGLISH (US)", color = IndustrialColors.Accent, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
-            }
-            Spacer(Modifier.height(8.dp))
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                Text("Visual Theme", color = IndustrialColors.TextSecondary)
-                Text("SIEMENS INDUSTRIAL", color = IndustrialColors.Accent, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
-            }
         }
 
         IndustrialButton(
