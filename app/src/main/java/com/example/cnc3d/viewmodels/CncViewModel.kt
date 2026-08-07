@@ -78,4 +78,25 @@ class CncViewModel @Inject constructor(
     fun selectFile(name: String) {
         _selectedFile.value = name
     }
+
+    fun goToZero() {
+        sendMdi("G0 X0 Y0 Z0")
+    }
+
+    fun setWorkOffset(offset: String) {
+        viewModelScope.launch {
+            sendCommandUseCase(offset)
+            val current = _status.value
+            _status.value = current.copy(activeOffset = offset)
+        }
+    }
+
+    fun zeroAxis(axis: String) {
+        sendMdi("G10 L20 P0 ${axis.uppercase()}0")
+    }
+
+    fun saveOffsets() {
+        // Typically involves refreshing state or sending a sync command
+        sendMdi("$$")
+    }
 }
