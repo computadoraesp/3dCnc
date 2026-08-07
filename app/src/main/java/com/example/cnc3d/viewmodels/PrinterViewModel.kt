@@ -1,14 +1,24 @@
 package com.example.cnc3d.viewmodels
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.cnc3d.domain.models.PrinterStatus
 import com.example.cnc3d.domain.models.GcodePath
 import com.example.cnc3d.domain.models.Mesh
-import com.example.cnc3d.domain.usecases.*
+import com.example.cnc3d.domain.models.PrinterStatus
+import com.example.cnc3d.domain.usecases.CancelJobUseCase
+import com.example.cnc3d.domain.usecases.GetStatusUseCase
+import com.example.cnc3d.domain.usecases.ListFilesUseCase
+import com.example.cnc3d.domain.usecases.PauseJobUseCase
+import com.example.cnc3d.domain.usecases.ResumeJobUseCase
+import com.example.cnc3d.domain.usecases.SendCommandUseCase
+import com.example.cnc3d.domain.usecases.StartJobUseCase
+import com.example.cnc3d.domain.usecases.UploadFileUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -21,6 +31,8 @@ class PrinterViewModel @Inject constructor(
     private val startJobUseCase: StartJobUseCase,
     private val sendCommandUseCase: SendCommandUseCase,
     private val listFilesUseCase: ListFilesUseCase,
+    private val uploadFileUseCase: UploadFileUseCase,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private val _status = MutableStateFlow(
@@ -45,6 +57,9 @@ class PrinterViewModel @Inject constructor(
 
     private val _selectedFile = MutableStateFlow<String?>(null)
     val selectedFile: StateFlow<String?> = _selectedFile
+
+    private val _uiMessage = kotlinx.coroutines.flow.MutableSharedFlow<String>()
+    val uiMessage = _uiMessage.asSharedFlow()
 
     fun refresh() {
         viewModelScope.launch {
@@ -141,6 +156,47 @@ class PrinterViewModel @Inject constructor(
 
     fun selectFile(name: String) {
         _selectedFile.value = name
+    }
+
+    fun uploadFile(uri: android.net.Uri) {
+        viewModelScope.launch {
+            val fileName = getFileName(uri) ?: "upload.gcode"
+            if (!fileName.endsWith(".gcode", true) && !fileName.endsWith(
+                    ".nc",
+                    true
+                ) && !fileName.endsWith(".gc", true)
+            ) {
+                _uiMessage.emit("Invalid file format. Please select .gcode or .nc")
+                return@launch
+            }
+
+            try {
+                val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+                if (bytes != null) {
+                    val success = uploadFileUseCase(fileName, bytes)
+                    if (success) {
+                        _uiMessage.emit("File uploaded successfully: $fileName")
+                        loadFiles()
+                    } else {
+                        _uiMessage.emit("Upload failed")
+                    }
+                }
+            } catch (e: Exception) {
+                _uiMessage.emit("Error: ${e.message}")
+            }
+        }
+    }
+
+    private fun getFileName(uri: android.net.Uri): String? {
+        var name: String? = null
+        val cursor = context.contentResolver.query(uri, null, null, null, null)
+        cursor?.use {
+            if (it.moveToFirst()) {
+                val index = it.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+                if (index != -1) name = it.getString(index)
+            }
+        }
+        return name
     }
 
     fun loadFiles() {

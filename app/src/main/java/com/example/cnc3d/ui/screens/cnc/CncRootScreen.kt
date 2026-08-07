@@ -36,6 +36,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -73,6 +74,12 @@ fun CncRootScreen(
         }
     }
 
+    LaunchedEffect(viewModel.uiMessage) {
+        viewModel.uiMessage.collect { msg ->
+            onShowInfo(msg)
+        }
+    }
+
     CompositionLocalProvider(LocalSnackbarHost provides snackbarHostState) {
         Scaffold(
             snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -90,7 +97,11 @@ fun CncRootScreen(
                             .padding(start = 16.dp),
                         verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
                     ) {
-                        IconButton(onClick = { navController.navigate(Routes.Home) }) {
+                        IconButton(onClick = {
+                            navController.navigate(Routes.Home) {
+                                popUpTo(Routes.Home) { inclusive = true }
+                            }
+                        }) {
                             Icon(
                                 Icons.Default.Home,
                                 contentDescription = "Home",

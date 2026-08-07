@@ -3,19 +3,25 @@ package com.example.cnc3d.ui.screens.printer
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.GridOn
 import androidx.compose.material.icons.filled.Hardware
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Terminal
 import androidx.compose.material.icons.filled.VerticalAlignBottom
 import androidx.compose.material.icons.filled.ViewInAr
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -26,6 +32,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -37,6 +44,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.cnc3d.ui.navigation.PrinterSubScreen
+import com.example.cnc3d.ui.navigation.Routes
 import com.example.cnc3d.ui.theme.IndustrialColors
 import com.example.cnc3d.ui.theme.IndustrialEmergencyButton
 import com.example.cnc3d.ui.theme.LocalSnackbarHost
@@ -60,17 +68,44 @@ fun PrinterRootScreen(
         }
     }
 
+    LaunchedEffect(viewModel.uiMessage) {
+        viewModel.uiMessage.collect { msg ->
+            onShowInfo(msg)
+        }
+    }
+
     CompositionLocalProvider(LocalSnackbarHost provides snackbarHostState) {
         Scaffold(
             snackbarHost = { SnackbarHost(snackbarHostState) },
             topBar = {
                 Column(modifier = Modifier.background(IndustrialColors.Background)) {
-                    IndustrialEmergencyButton(
-                        onClick = { viewModel.emergencyStop() },
+                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp)
-                    )
+                            .padding(16.dp),
+                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                    ) {
+                        IconButton(onClick = {
+                            navController.navigate(Routes.Home) {
+                                popUpTo(Routes.Home) { inclusive = true }
+                            }
+                        }) {
+                            Icon(
+                                Icons.Default.Home,
+                                contentDescription = "Home",
+                                tint = IndustrialColors.TextPrimary,
+                                modifier = Modifier.size(32.dp)
+                            )
+                        }
+
+                        Spacer(Modifier.width(16.dp))
+
+                        IndustrialEmergencyButton(
+                            onClick = { viewModel.emergencyStop() },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+
                     // Linear Progress for Print Job
                     val status by viewModel.status.collectAsState()
                     if (status.progress > 0) {

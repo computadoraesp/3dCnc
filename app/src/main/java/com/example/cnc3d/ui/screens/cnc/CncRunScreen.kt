@@ -1,5 +1,7 @@
 package com.example.cnc3d.ui.screens.cnc
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -62,10 +64,25 @@ fun CncRunScreen(
     
     var showFileLoader by remember { mutableStateOf(value = false) }
 
+    val filePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: android.net.Uri? ->
+        uri?.let { viewModel.uploadFile(it) }
+    }
+
     if (showFileLoader) {
         AlertDialog(
             onDismissRequest = { showFileLoader = false },
-            confirmButton = {},
+            confirmButton = {
+                IndustrialButton(
+                    text = "Load from Device",
+                    onClick = {
+                        filePickerLauncher.launch("*/*")
+                        showFileLoader = false
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
             title = { Text("Select Machine File", color = IndustrialColors.TextPrimary) },
             text = {
                 Column(Modifier
