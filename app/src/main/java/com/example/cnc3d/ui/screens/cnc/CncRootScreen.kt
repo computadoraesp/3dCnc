@@ -46,6 +46,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.example.cnc3d.core.network.ConnectionType
 import com.example.cnc3d.ui.navigation.CncSubScreen
@@ -53,15 +54,24 @@ import com.example.cnc3d.ui.navigation.Routes
 import com.example.cnc3d.ui.theme.IndustrialColors
 import com.example.cnc3d.ui.theme.IndustrialEmergencyButton
 import com.example.cnc3d.ui.theme.LocalSnackbarHost
+import com.example.cnc3d.viewmodels.CncConfigViewModel
+import com.example.cnc3d.viewmodels.CncDiagViewModel
+import com.example.cnc3d.viewmodels.CncFileViewModel
+import com.example.cnc3d.viewmodels.CncToolViewModel
 import com.example.cnc3d.viewmodels.CncViewModel
 import kotlinx.coroutines.launch
 
 @Composable
 fun CncRootScreen(
     navController: NavHostController,
-    viewModel: CncViewModel,
+    viewModel: CncViewModel = hiltViewModel(),
     initialSubScreen: CncSubScreen = CncSubScreen.RUN
 ) {
+    val configViewModel: CncConfigViewModel = hiltViewModel()
+    val diagViewModel: CncDiagViewModel = hiltViewModel()
+    val toolViewModel: CncToolViewModel = hiltViewModel()
+    val fileViewModel: CncFileViewModel = hiltViewModel()
+
     var activeSubScreen by remember { mutableStateOf(initialSubScreen) }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -74,9 +84,12 @@ fun CncRootScreen(
         }
     }
 
-    LaunchedEffect(viewModel.uiMessage) {
-        viewModel.uiMessage.collect { msg ->
-            onShowInfo(msg)
+    LaunchedEffect(configViewModel.uiMessage, fileViewModel.uiMessage) {
+        scope.launch {
+            configViewModel.uiMessage.collect { onShowInfo(it) }
+        }
+        scope.launch {
+            fileViewModel.uiMessage.collect { onShowInfo(it) }
         }
     }
 
@@ -174,12 +187,12 @@ fun CncRootScreen(
                 .padding(padding)
                 .fillMaxSize()) {
                 when (activeSubScreen) {
-                    CncSubScreen.RUN -> CncRunScreen(viewModel, onShowInfo)
+                    CncSubScreen.RUN -> CncRunScreen(viewModel, fileViewModel, onShowInfo)
                     CncSubScreen.MDI -> CncMdiScreen(viewModel)
                     CncSubScreen.OFFSETS -> CncOffsetScreen(viewModel)
-                    CncSubScreen.TOOLS -> CncToolScreen(viewModel)
-                    CncSubScreen.DIAGNOSTICS -> CncDiagScreen(viewModel, onShowInfo)
-                    CncSubScreen.CONFIG -> CncConfigScreen(viewModel)
+                    CncSubScreen.TOOLS -> CncToolScreen(toolViewModel)
+                    CncSubScreen.DIAGNOSTICS -> CncDiagScreen(diagViewModel, onShowInfo)
+                    CncSubScreen.CONFIG -> CncConfigScreen(configViewModel)
                     CncSubScreen.RENDERER -> CncRendererScreen(viewModel)
                 }
             }

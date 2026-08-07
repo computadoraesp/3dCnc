@@ -48,14 +48,15 @@ import com.example.cnc3d.ui.theme.IndustrialColors
 import com.example.cnc3d.ui.theme.IndustrialPanel
 import com.example.cnc3d.ui.theme.IndustrialTextField
 import com.example.cnc3d.ui.theme.LocalSnackbarHost
-import com.example.cnc3d.viewmodels.CncViewModel
+import com.example.cnc3d.viewmodels.CncConfigViewModel
 import kotlinx.coroutines.launch
 
 @Composable
-fun CncConfigScreen(viewModel: CncViewModel) {
+fun CncConfigScreen(viewModel: CncConfigViewModel) {
     val scrollState = rememberScrollState()
     val config by viewModel.editableConfig.collectAsState()
     val profile by viewModel.editableProfile.collectAsState()
+    val uiMessage by viewModel.uiMessage.collectAsState("")
 
     Column(
         modifier = Modifier

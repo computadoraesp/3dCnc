@@ -48,17 +48,19 @@ import com.example.cnc3d.ui.theme.IndustrialDro
 import com.example.cnc3d.ui.theme.IndustrialPanel
 import com.example.cnc3d.ui.theme.IndustrialSensor
 import com.example.cnc3d.ui.theme.IndustrialTabbedPanel
+import com.example.cnc3d.viewmodels.CncFileViewModel
 import com.example.cnc3d.viewmodels.CncViewModel
 import java.util.Locale
 
 @Composable
 fun CncRunScreen(
     viewModel: CncViewModel,
+    fileViewModel: CncFileViewModel,
     onShowInfo: (String) -> Unit = {},
 ) {
     val status by viewModel.status.collectAsState()
     val gcodePath by viewModel.gcodePath.collectAsState()
-    val availableFiles by viewModel.availableFiles.collectAsState()
+    val availableFiles by fileViewModel.availableFiles.collectAsState()
     val selectedFile by viewModel.selectedFile.collectAsState()
     val scrollState = rememberScrollState()
     
@@ -67,7 +69,7 @@ fun CncRunScreen(
     val filePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: android.net.Uri? ->
-        uri?.let { viewModel.uploadFile(it) }
+        uri?.let { fileViewModel.uploadFile(it) }
     }
 
     if (showFileLoader) {
@@ -105,7 +107,7 @@ fun CncRunScreen(
     }
 
     LaunchedEffect(Unit) {
-        viewModel.loadFiles()
+        fileViewModel.loadFiles()
     }
 
     Column(

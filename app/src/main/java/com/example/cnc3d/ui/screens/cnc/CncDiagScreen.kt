@@ -25,11 +25,11 @@ import com.example.cnc3d.ui.theme.IndustrialInfoPanel
 import com.example.cnc3d.ui.theme.IndustrialLed
 import com.example.cnc3d.ui.theme.IndustrialLedStrip
 import com.example.cnc3d.ui.theme.LedState
-import com.example.cnc3d.viewmodels.CncViewModel
+import com.example.cnc3d.viewmodels.CncDiagViewModel
 
 @Composable
 fun CncDiagScreen(
-    viewModel: CncViewModel,
+    viewModel: CncDiagViewModel,
     onShowInfo: (String) -> Unit = {}
 ) {
     val status by viewModel.status.collectAsState()

@@ -33,13 +33,13 @@ import com.example.cnc3d.ui.theme.IndustrialButton
 import com.example.cnc3d.ui.theme.IndustrialColors
 import com.example.cnc3d.ui.theme.IndustrialPanel
 import com.example.cnc3d.ui.theme.IndustrialTextField
-import com.example.cnc3d.viewmodels.CncViewModel
+import com.example.cnc3d.viewmodels.CncToolViewModel
 
 @Composable
-fun CncToolScreen(viewModel: CncViewModel) {
+fun CncToolScreen(viewModel: CncToolViewModel) {
     val tools by viewModel.toolLibrary.collectAsState()
-    val config by viewModel.editableConfig.collectAsState()
-    val unit = config.units.uppercase()
+    val units by viewModel.units.collectAsState()
+    val unit = units.uppercase()
     
     var selectedToolId by remember { mutableIntStateOf(-1) }
     var showEditDialog by remember { mutableStateOf(false) }
