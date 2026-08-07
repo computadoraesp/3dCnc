@@ -1,21 +1,26 @@
 package com.example.cnc3d.ui.screens.cloud
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Settings
-import com.example.cnc3d.viewmodels.CloudViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
+import com.example.cnc3d.ui.theme.IndustrialButton
+import com.example.cnc3d.ui.theme.IndustrialColors
+import com.example.cnc3d.ui.theme.IndustrialInfoPanel
+import com.example.cnc3d.ui.theme.IndustrialPanel
+import com.example.cnc3d.viewmodels.CloudViewModel
 
 @Composable
 fun CloudScreen(
@@ -29,146 +34,63 @@ fun CloudScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(32.dp)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        IndustrialPanel(title = "Cloud Synchronization") {
+            IndustrialInfoPanel(
+                title = "Service Metrics",
+                info = mapOf(
+                    "Status" to status,
+                    "Last Sync" to lastSync,
+                    "Pending" to "$pendingCount files",
+                    "Target" to "Google Drive"
+                )
+            )
+        }
 
-        CloudHeader(navController, status)
+        IndustrialPanel(title = "Data Management") {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                IndustrialButton(
+                    text = "Upload All",
+                    onClick = { viewModel.uploadFiles() },
+                    modifier = Modifier.weight(1f),
+                    containerColor = IndustrialColors.Success
+                )
+                IndustrialButton(
+                    text = "Sync Remote",
+                    onClick = { viewModel.sync() },
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            Spacer(Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                IndustrialButton(
+                    text = "Download",
+                    onClick = { viewModel.downloadFiles() },
+                    modifier = Modifier.weight(1f),
+                    containerColor = IndustrialColors.Border
+                )
+                IndustrialButton(
+                    text = "Wipe Cache",
+                    onClick = { viewModel.clearCache() },
+                    modifier = Modifier.weight(1f),
+                    containerColor = IndustrialColors.Emergency
+                )
+            }
+        }
 
-        CloudControls(viewModel)
-
-        CloudStatus(lastSync, pendingCount)
-    }
-}
-
-@Composable
-private fun CloudHeader(navController: NavHostController, status: String) {
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(148.dp) // φ proportion
-            .background(Color(0xFF1E1E1E), RoundedCornerShape(12.dp))
-            .padding(24.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        IndustrialPanel(title = "Security & Logs") {
             Text(
-                text = "Cloud Sync",
-                style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
-                color = MaterialTheme.colorScheme.primary
+                "SESSION ACTIVE",
+                color = IndustrialColors.Accent,
+                style = MaterialTheme.typography.labelSmall
             )
             Text(
-                text = "Status: $status",
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color(0xFFB0BEC5)
+                "CONNECTED AS: workshop-operator",
+                color = IndustrialColors.TextSecondary,
+                style = MaterialTheme.typography.labelSmall
             )
         }
-
-        IconButton(onClick = { navController.navigate("settings") }) {
-            Icon(
-                imageVector = Icons.Default.Settings,
-                contentDescription = "Settings",
-                tint = MaterialTheme.colorScheme.primary
-            )
-        }
-    }
-}
-
-@Composable
-private fun CloudControls(viewModel: CloudViewModel) {
-
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
-    ) {
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(20.dp)
-        ) {
-            CloudButton("Upload Files", Color(0xFF00BCD4)) { viewModel.uploadFiles() }
-            CloudButton("Download Files", Color(0xFF4CAF50)) { viewModel.downloadFiles() }
-        }
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(20.dp)
-        ) {
-            CloudButton("Sync Now", Color(0xFFFFC107)) { viewModel.sync() }
-            CloudButton("Clear Cache", Color(0xFFE53935)) { viewModel.clearCache() }
-        }
-    }
-}
-
-@Composable
-private fun RowScope.CloudButton(
-    label: String, 
-    color: Color,
-    onClick: () -> Unit = {}
-) {
-
-    var pulse by remember { mutableStateOf(false) }
-    val animatedColor by animateColorAsState(
-        targetValue = if (pulse) color.copy(alpha = 0.20f) else color.copy(alpha = 0.12f),
-        label = ""
-    )
-
-    LaunchedEffect(Unit) {
-        while (true) {
-            pulse = !pulse
-            kotlinx.coroutines.delay(900)
-        }
-    }
-
-    Surface(
-        onClick = onClick,
-        modifier = Modifier
-            .weight(1f)
-            .height(148.dp),
-        color = animatedColor,
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        Box(
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold),
-                color = color
-            )
-        }
-    }
-}
-
-@Composable
-private fun CloudStatus(lastSync: String, pendingCount: Int) {
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color(0xFF2A2A2A), RoundedCornerShape(12.dp))
-            .padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-
-        StatusMetric("Last Sync", lastSync)
-        StatusMetric("Pending Uploads", pendingCount.toString())
-        StatusMetric("Server", "google.drive.api")
-    }
-}
-
-@Composable
-private fun StatusMetric(label: String, value: String) {
-
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(label, style = MaterialTheme.typography.titleMedium, color = Color(0xFFB0BEC5))
-        Text(value, style = MaterialTheme.typography.titleMedium, color = Color(0xFF00BCD4))
     }
 }
