@@ -17,6 +17,7 @@ import com.example.cnc3d.domain.models.UsbDescriptor
 import com.example.cnc3d.domain.models.cnc.CncStatus
 import com.example.cnc3d.domain.repositories.MachineProfileRepository
 import com.example.cnc3d.domain.usecases.CancelJobUseCase
+import com.example.cnc3d.domain.usecases.ConnectUseCase
 import com.example.cnc3d.domain.usecases.GetStatusUseCase
 import com.example.cnc3d.domain.usecases.ListFilesUseCase
 import com.example.cnc3d.domain.usecases.SendCommandUseCase
@@ -24,6 +25,7 @@ import com.example.cnc3d.domain.usecases.StartJobUseCase
 import com.example.cnc3d.domain.usecases.UploadFileUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -41,7 +43,8 @@ class CncViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val wifiScanner: WifiScanner,
     private val bluetoothScanner: BluetoothScanner,
-    private val uploadFileUseCase: UploadFileUseCase
+    private val uploadFileUseCase: UploadFileUseCase,
+    private val connectUseCase: ConnectUseCase
 ) : ViewModel() {
 
     private val _status = MutableStateFlow(
@@ -111,6 +114,23 @@ class CncViewModel @Inject constructor(
                 firmware = com.example.cnc3d.core.detection.FirmwareType.UNKNOWN
             )
             _editableConfig.value = profile?.config ?: MachineConfig()
+
+            // Trigger automatic connection if profile exists
+            profile?.let {
+                connectUseCase(it.address, it.connectionType)
+                startStatusPolling()
+            }
+        }
+    }
+
+    private fun startStatusPolling() {
+        viewModelScope.launch {
+            while (true) {
+                if (_status.value.state != "Disconnected") {
+                    refresh()
+                }
+                delay(2000) // Poll every 2 seconds
+            }
         }
     }
 
@@ -284,6 +304,12 @@ class CncViewModel @Inject constructor(
 
     fun deleteTool(id: Int) {
         _toolLibrary.value = _toolLibrary.value.filter { it.id != id }
+    }
+
+    fun updateTool(id: Int, name: String, length: Float, diameter: Float) {
+        _toolLibrary.value = _toolLibrary.value.map {
+            if (it.id == id) it.copy(name = name, length = length, diameter = diameter) else it
+        }
     }
 
     fun saveOffsets() {

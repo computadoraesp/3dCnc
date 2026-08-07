@@ -191,7 +191,7 @@ fun IndustrialButton(
 fun IndustrialEmergencyButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    shape: androidx.compose.ui.graphics.Shape = RoundedCornerShape(4.dp)
+    shape: androidx.compose.ui.graphics.Shape = RoundedCornerShape(50.dp)
 ) {
     val snackbarHost = LocalSnackbarHost.current
     val scope = rememberCoroutineScope()
@@ -403,6 +403,51 @@ fun IndustrialTextField(
             singleLine = true,
             keyboardOptions = keyboardOptions
         )
+    }
+}
+
+@Composable
+fun IndustrialExpandableModule(
+    title: String,
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Column(
+        modifier = modifier
+            .background(IndustrialColors.Panel, RoundedCornerShape(2.dp))
+            .border(BorderStroke(1.dp, IndustrialColors.Border), RoundedCornerShape(2.dp))
+            .clickable { expanded = !expanded }
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(IndustrialColors.Border)
+                .padding(horizontal = 12.dp, vertical = 6.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = title.uppercase(),
+                color = if (expanded) IndustrialColors.Accent else IndustrialColors.TextSecondary,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.sp
+            )
+            Text(
+                text = if (expanded) "▼" else "▶",
+                color = IndustrialColors.TextSecondary,
+                fontSize = 10.sp
+            )
+        }
+        if (expanded) {
+            Column(
+                modifier = Modifier.padding(12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                content = content
+            )
+        }
     }
 }
 

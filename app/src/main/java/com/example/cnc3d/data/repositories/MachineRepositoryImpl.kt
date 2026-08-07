@@ -13,6 +13,7 @@ import com.example.cnc3d.core.websocket.EventStream
 import com.example.cnc3d.data.datasources.FluidncDataSource
 import com.example.cnc3d.data.datasources.MoonrakerDataSource
 import com.example.cnc3d.domain.models.Event
+import com.example.cnc3d.domain.models.PrinterStatus
 import com.example.cnc3d.domain.models.cnc.CncStatus
 import com.example.cnc3d.domain.repositories.MachineRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -75,10 +76,10 @@ class MachineRepositoryImpl @Inject constructor(
             else -> return "Unknown firmware"
         }
 
-        return if (status is CncStatus) {
-            status.copy(connectionType = currentType)
-        } else {
-            status
+        return when (status) {
+            is CncStatus -> status.copy(connectionType = currentType)
+            is PrinterStatus -> status.copy(connectionType = currentType)
+            else -> status
         }
     }
 

@@ -5,7 +5,12 @@ import com.example.cnc3d.core.network.ConnectionManager
 import com.example.cnc3d.domain.models.CameraInfo
 import com.example.cnc3d.domain.models.MeshPoint
 import com.example.cnc3d.domain.models.cnc.CncStatus
-import kotlinx.serialization.json.*
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.float
+import kotlinx.serialization.json.int
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import javax.inject.Inject
 
 class FluidncDataSource @Inject constructor(
@@ -36,7 +41,17 @@ class FluidncDataSource @Inject constructor(
                 val f = fsArr?.get(0)?.jsonPrimitive?.int ?: 0
                 val s = fsArr?.get(1)?.jsonPrimitive?.int ?: 0
 
-                return CncStatus(state, Triple(x, y, z), s, f)
+                val sensors = mutableMapOf<String, Boolean>()
+                statusObj?.get("pins")?.jsonPrimitive?.content?.let { pins ->
+                    sensors["x_min"] = pins.contains("X")
+                    sensors["y_min"] = pins.contains("Y")
+                    sensors["z_min"] = pins.contains("Z")
+                    sensors["probe"] = pins.contains("P")
+                    sensors["e_stop"] = pins.contains("E")
+                    sensors["door"] = pins.contains("D")
+                }
+
+                return CncStatus(state, Triple(x, y, z), s, f, sensors = sensors)
             }
         } catch (e: Exception) {
             if (message.startsWith("<") && message.endsWith(">")) {
@@ -55,6 +70,7 @@ class FluidncDataSource @Inject constructor(
         var z = 0f
         var f = 0
         var s = 0
+        val sensors = mutableMapOf<String, Boolean>()
 
         parts.drop(1).forEach { part ->
             when {
@@ -69,9 +85,21 @@ class FluidncDataSource @Inject constructor(
                     f = rates[0].toIntOrNull() ?: f
                     s = rates[1].toIntOrNull() ?: s
                 }
+                part.startsWith("Pn:") -> {
+                    val pins = part.substringAfter(":")
+                    sensors["x_min"] = pins.contains("X")
+                    sensors["y_min"] = pins.contains("Y")
+                    sensors["z_min"] = pins.contains("Z")
+                    sensors["x_max"] = pins.contains("x")
+                    sensors["y_max"] = pins.contains("y")
+                    sensors["z_max"] = pins.contains("z")
+                    sensors["probe"] = pins.contains("P")
+                    sensors["e_stop"] = pins.contains("E")
+                    sensors["door"] = pins.contains("D")
+                }
             }
         }
-        return CncStatus(state, Triple(x, y, z), s, f)
+        return CncStatus(state, Triple(x, y, z), s, f, sensors = sensors)
     }
 
     suspend fun sendCommand(cmd: String): String {

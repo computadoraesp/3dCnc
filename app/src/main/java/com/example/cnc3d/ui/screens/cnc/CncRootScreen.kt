@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.FactCheck
 import androidx.compose.material.icons.filled.Bluetooth
@@ -138,13 +137,7 @@ fun CncRootScreen(
                         onClick = { viewModel.emergencyStop() },
                         modifier = Modifier
                             .weight(1f)
-                            .fillMaxHeight(),
-                        shape = RoundedCornerShape(
-                            topStart = 0.dp,
-                            bottomStart = 0.dp,
-                            topEnd = 40.dp,
-                            bottomEnd = 40.dp
-                        )
+                            .fillMaxHeight()
                     )
                 }
             },

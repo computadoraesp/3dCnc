@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -13,14 +14,18 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material.icons.filled.GridOn
 import androidx.compose.material.icons.filled.Hardware
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Terminal
+import androidx.compose.material.icons.filled.Usb
 import androidx.compose.material.icons.filled.VerticalAlignBottom
 import androidx.compose.material.icons.filled.ViewInAr
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -44,6 +49,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.example.cnc3d.core.network.ConnectionType
 import com.example.cnc3d.ui.navigation.PrinterSubScreen
 import com.example.cnc3d.ui.navigation.Routes
 import com.example.cnc3d.ui.theme.IndustrialColors
@@ -75,6 +81,8 @@ fun PrinterRootScreen(
         }
     }
 
+    val status by viewModel.status.collectAsState()
+
     CompositionLocalProvider(LocalSnackbarHost provides snackbarHostState) {
         Scaffold(
             snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -87,32 +95,59 @@ fun PrinterRootScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp),
+                            .height(80.dp),
                         verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
                     ) {
-                        IconButton(onClick = {
-                            navController.navigate(Routes.Home) {
-                                popUpTo(Routes.Home) { inclusive = true }
+                        Row(
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(start = 16.dp),
+                            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                        ) {
+                            IconButton(onClick = {
+                                navController.navigate(Routes.Home) {
+                                    popUpTo(Routes.Home) { inclusive = true }
+                                }
+                            }) {
+                                Icon(
+                                    Icons.Default.Home,
+                                    contentDescription = "Home",
+                                    tint = IndustrialColors.TextPrimary,
+                                    modifier = Modifier.size(32.dp)
+                                )
                             }
-                        }) {
+
+                            Spacer(Modifier.width(16.dp))
+
+                            val isConnected = status.state != "Disconnected"
+                            val connIcon = if (isConnected) {
+                                when (status.connectionType) {
+                                    ConnectionType.WIFI -> Icons.Default.Wifi
+                                    ConnectionType.BLUETOOTH -> Icons.Default.Bluetooth
+                                    ConnectionType.USB -> Icons.Default.Usb
+                                    null -> Icons.Default.Wifi
+                                }
+                            } else {
+                                Icons.Default.Warning
+                            }
+
                             Icon(
-                                Icons.Default.Home,
-                                contentDescription = "Home",
-                                tint = IndustrialColors.TextPrimary,
+                                connIcon,
+                                contentDescription = "Connection Status",
+                                tint = if (isConnected) IndustrialColors.Accent else IndustrialColors.Warning,
                                 modifier = Modifier.size(32.dp)
                             )
                         }
 
-                        Spacer(Modifier.width(16.dp))
-
                         IndustrialEmergencyButton(
                             onClick = { viewModel.emergencyStop() },
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
                         )
                     }
 
                     // Linear Progress for Print Job
-                    val status by viewModel.status.collectAsState()
                     if (status.progress > 0) {
                         LinearProgressIndicator(
                             progress = { status.progress / 100f },
