@@ -1,11 +1,12 @@
 package com.example.cnc3d.domain.repositories
 
-import com.example.cnc3d.domain.models.Event
-import com.example.cnc3d.domain.models.*
 import com.example.cnc3d.core.network.ConnectionType
+import com.example.cnc3d.domain.models.Event
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 
 interface MachineRepository {
+    val machineStatus: StateFlow<Any>
 
     suspend fun connect(address: String, type: ConnectionType = ConnectionType.WIFI): Boolean
 

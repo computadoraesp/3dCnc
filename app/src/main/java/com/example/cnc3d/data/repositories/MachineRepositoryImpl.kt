@@ -19,6 +19,9 @@ import com.example.cnc3d.domain.repositories.MachineRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import javax.inject.Inject
 
@@ -31,6 +34,9 @@ class MachineRepositoryImpl @Inject constructor(
     private val detector: FirmwareDetector,
     private val connectionManager: ConnectionManager
 ) : MachineRepository {
+
+    private val _machineStatus = MutableStateFlow<Any>("Disconnected")
+    override val machineStatus: StateFlow<Any> = _machineStatus.asStateFlow()
 
     private var firmware: FirmwareType = FirmwareType.UNKNOWN
     private var currentType: ConnectionType? = null
@@ -76,11 +82,13 @@ class MachineRepositoryImpl @Inject constructor(
             else -> return "Unknown firmware"
         }
 
-        return when (status) {
+        val enriched = when (status) {
             is CncStatus -> status.copy(connectionType = currentType)
             is PrinterStatus -> status.copy(connectionType = currentType)
             else -> status
         }
+        _machineStatus.value = enriched
+        return enriched
     }
 
     override suspend fun startJob(fileName: String): Boolean {
