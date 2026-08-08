@@ -9,9 +9,20 @@ This project is the evolution of legacy serial‑based controllers, offering a c
 
 ## 🚀 Features
 
+### Multi-Protocol Connectivity
+
+- **Intelligent USB-OTG** — Automatic physical detection and deep descriptor analysis (VID/PID,
+  Class, Endpoints). Supports plug-and-play for CDC-ACM and guided setup for "invisible" hardware.
+- **Bluetooth Discovery** — Active scanning for nearby Bluetooth-enabled controllers with easy
+  one-tap pairing.
+- **Wi-Fi Local (HTTP + WebSocket)** — High-performance network control with real-time signal
+  strength (dBm) indicators.
+- **Optional Internet Remote Control** — Secure remote management via WebSocket.
+
 ### Modern Firmware Support
 - **FluidNC (ESP32)** — CNC motion control, YAML configuration, WebSocket telemetry.
-- **Klipper + Moonraker** — 3D printing control, temperature monitoring, job management, macro execution.
+- **Klipper + Moonraker** — 3D printing control, temperature monitoring, job management, and macro
+  execution.
 
 ### Network‑Based Connectivity
 - **Wi-Fi Local** (HTTP + WebSocket)

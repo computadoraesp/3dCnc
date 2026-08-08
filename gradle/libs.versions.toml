@@ -28,7 +28,7 @@ junitExt = "1.2.1"
 espressoCore = "3.5.1"
 mockk = "1.13.17"
 
-hilt = "2.51.1"
+hilt = "2.57.1"
 hiltNavigation = "1.2.0"
 
 [libraries]
