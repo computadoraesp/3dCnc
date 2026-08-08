@@ -20,12 +20,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.NavHostController
+import com.example.cnc3d.domain.models.CameraInfo
 import com.example.cnc3d.ui.theme.IndustrialButton
 import com.example.cnc3d.ui.theme.IndustrialColors
 import com.example.cnc3d.ui.theme.IndustrialPanel
+import com.example.cnc3d.ui.theme._3dCncTheme
 import com.example.cnc3d.viewmodels.CameraViewModel
 
 @Composable
@@ -34,19 +37,39 @@ fun CameraScreen(
     vm: CameraViewModel? = null
 ) {
     if (vm == null) {
-        Box(Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
-            Text(
-                "NO CAMERA HARDWARE DETECTED",
-                color = IndustrialColors.Error,
-                fontWeight = FontWeight.Bold
-            )
-        }
+        CameraEmptyState()
         return
     }
 
     val cameras by vm.cameras.collectAsState()
     val snapshot by vm.snapshot.collectAsState()
 
+    CameraContent(
+        cameras = cameras,
+        snapshot = snapshot,
+        onLoad = { vm.load() },
+        onTakeSnapshot = { vm.takeSnapshot(it) }
+    )
+}
+
+@Composable
+private fun CameraEmptyState() {
+    Box(Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
+        Text(
+            "NO CAMERA HARDWARE DETECTED",
+            color = IndustrialColors.Error,
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
+
+@Composable
+fun CameraContent(
+    cameras: List<CameraInfo>,
+    snapshot: ByteArray?,
+    onLoad: () -> Unit,
+    onTakeSnapshot: (String) -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -56,7 +79,7 @@ fun CameraScreen(
         IndustrialPanel(title = "Hardware Monitoring") {
             IndustrialButton(
                 text = "Discover Feed",
-                onClick = { vm.load() },
+                onClick = onLoad,
                 modifier = Modifier.fillMaxWidth()
             )
         }
@@ -80,7 +103,7 @@ fun CameraScreen(
 
                 IndustrialButton(
                     text = "Capture Frame",
-                    onClick = { vm.takeSnapshot(cam.snapshotUrl) },
+                    onClick = { onTakeSnapshot(cam.snapshotUrl) },
                     modifier = Modifier.fillMaxWidth(),
                     containerColor = IndustrialColors.Border
                 )
@@ -96,5 +119,25 @@ fun CameraScreen(
                 )
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun CameraPreview() {
+    _3dCncTheme {
+        CameraContent(
+            cameras = listOf(
+                CameraInfo(
+                    "Nozzle Cam",
+                    "http://192.168.1.50/stream",
+                    "http://192.168.1.50/snapshot"
+                ),
+                CameraInfo("Room Cam", "http://192.168.1.60/stream", "http://192.168.1.60/snapshot")
+            ),
+            snapshot = null,
+            onLoad = {},
+            onTakeSnapshot = {}
+        )
     }
 }

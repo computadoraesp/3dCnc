@@ -40,23 +40,70 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.cnc3d.core.network.ConnectionType
+import com.example.cnc3d.domain.models.MachineConfig
+import com.example.cnc3d.domain.models.MachineProfile
+import com.example.cnc3d.domain.models.UsbDescriptor
 import com.example.cnc3d.ui.theme.IndustrialButton
 import com.example.cnc3d.ui.theme.IndustrialColors
 import com.example.cnc3d.ui.theme.IndustrialPanel
 import com.example.cnc3d.ui.theme.IndustrialTextField
 import com.example.cnc3d.ui.theme.LocalSnackbarHost
+import com.example.cnc3d.ui.theme._3dCncTheme
 import com.example.cnc3d.viewmodels.CncConfigViewModel
 import kotlinx.coroutines.launch
 
 @Composable
 fun CncConfigScreen(viewModel: CncConfigViewModel) {
-    val scrollState = rememberScrollState()
     val config by viewModel.editableConfig.collectAsState()
     val profile by viewModel.editableProfile.collectAsState()
     val uiMessage by viewModel.uiMessage.collectAsState("")
+    val wifiNetworks by viewModel.wifiNetworks.collectAsState()
+    val bluetoothDevices by viewModel.bluetoothDevices.collectAsState()
+    val usbDescriptors by viewModel.usbDescriptors.collectAsState()
+    val manualUsbConfig by viewModel.manualUsbConfig.collectAsState()
+
+    CncConfigContent(
+        config = config,
+        profile = profile,
+        uiMessage = uiMessage,
+        wifiNetworks = wifiNetworks,
+        bluetoothDevices = bluetoothDevices,
+        usbDescriptors = usbDescriptors,
+        manualUsbConfig = manualUsbConfig,
+        onUpdateProfile = { viewModel.updateProfile(it) },
+        onUpdateConfig = { viewModel.updateConfig(it) },
+        onSave = { viewModel.saveConfiguration() },
+        onFactoryReset = { viewModel.factoryReset() },
+        onStartUsbDiscovery = { viewModel.startUsbDiscovery() },
+        onUpdateManualUsb = { viewModel.updateManualUsb(it) },
+        onStartWifiScan = { viewModel.startWifiScan() },
+        onStartBluetoothScan = { viewModel.startBluetoothScan() }
+    )
+}
+
+@Composable
+fun CncConfigContent(
+    config: MachineConfig,
+    profile: MachineProfile?,
+    uiMessage: String,
+    wifiNetworks: List<android.net.wifi.ScanResult>,
+    bluetoothDevices: List<android.bluetooth.BluetoothDevice>,
+    usbDescriptors: List<UsbDescriptor>,
+    manualUsbConfig: UsbDescriptor,
+    onUpdateProfile: ((MachineProfile) -> MachineProfile) -> Unit,
+    onUpdateConfig: ((MachineConfig) -> MachineConfig) -> Unit,
+    onSave: () -> Unit,
+    onFactoryReset: () -> Unit,
+    onStartUsbDiscovery: () -> Unit,
+    onUpdateManualUsb: ((UsbDescriptor) -> UsbDescriptor) -> Unit,
+    onStartWifiScan: () -> Unit,
+    onStartBluetoothScan: () -> Unit
+) {
+    val scrollState = rememberScrollState()
 
     Column(
         modifier = Modifier
@@ -68,7 +115,7 @@ fun CncConfigScreen(viewModel: CncConfigViewModel) {
         IndustrialPanel(title = "Machine Parameters") {
             IndustrialTextField(
                 value = profile?.name ?: "",
-                onValueChange = { name -> viewModel.updateProfile { it.copy(name = name) } },
+                onValueChange = { name -> onUpdateProfile { it.copy(name = name) } },
                 label = "Machine Name",
                 modifier = Modifier.fillMaxWidth()
             )
@@ -85,7 +132,7 @@ fun CncConfigScreen(viewModel: CncConfigViewModel) {
                 value = unitLabel,
                 modifier = Modifier.clickable {
                     val next = if (config.units == "mm") "inch" else "mm"
-                    viewModel.updateConfig { it.copy(units = next) }
+                    onUpdateConfig { it.copy(units = next) }
                     scope.launch {
                         snackbarHost.currentSnackbarData?.dismiss()
                         snackbarHost.showSnackbar("Units set to: ${next.uppercase()}")
@@ -101,11 +148,8 @@ fun CncConfigScreen(viewModel: CncConfigViewModel) {
                 IndustrialTextField(
                     value = config.stepsPerMmX.toString(),
                     onValueChange = {
-                        val v = it.toFloatOrNull() ?: 0f; viewModel.updateConfig {
-                        it.copy(
-                            stepsPerMmX = v
-                        )
-                    }
+                        val v = it.toFloatOrNull() ?: 0f
+                        onUpdateConfig { it.copy(stepsPerMmX = v) }
                     },
                     label = "X Steps/unit",
                     modifier = Modifier.weight(1f),
@@ -114,11 +158,8 @@ fun CncConfigScreen(viewModel: CncConfigViewModel) {
                 IndustrialTextField(
                     value = config.stepsPerMmY.toString(),
                     onValueChange = {
-                        val v = it.toFloatOrNull() ?: 0f; viewModel.updateConfig {
-                        it.copy(
-                            stepsPerMmY = v
-                        )
-                    }
+                        val v = it.toFloatOrNull() ?: 0f
+                        onUpdateConfig { it.copy(stepsPerMmY = v) }
                     },
                     label = "Y Steps/unit",
                     modifier = Modifier.weight(1f),
@@ -128,8 +169,8 @@ fun CncConfigScreen(viewModel: CncConfigViewModel) {
             IndustrialTextField(
                 value = config.stepsPerMmZ.toString(),
                 onValueChange = {
-                    val v = it.toFloatOrNull()
-                        ?: 0f; viewModel.updateConfig { it.copy(stepsPerMmZ = v) }
+                    val v = it.toFloatOrNull() ?: 0f
+                    onUpdateConfig { it.copy(stepsPerMmZ = v) }
                 },
                 label = "Z Steps/unit",
                 modifier = Modifier.fillMaxWidth(),
@@ -142,11 +183,8 @@ fun CncConfigScreen(viewModel: CncConfigViewModel) {
                 IndustrialTextField(
                     value = config.maxSpindleSpeed.toString(),
                     onValueChange = {
-                        val v = it.toFloatOrNull() ?: 0f; viewModel.updateConfig {
-                        it.copy(
-                            maxSpindleSpeed = v
-                        )
-                    }
+                        val v = it.toFloatOrNull() ?: 0f
+                        onUpdateConfig { it.copy(maxSpindleSpeed = v) }
                     },
                     label = "Max RPM",
                     modifier = Modifier.weight(1f),
@@ -155,11 +193,8 @@ fun CncConfigScreen(viewModel: CncConfigViewModel) {
                 IndustrialTextField(
                     value = config.minSpindleSpeed.toString(),
                     onValueChange = {
-                        val v = it.toFloatOrNull() ?: 0f; viewModel.updateConfig {
-                        it.copy(
-                            minSpindleSpeed = v
-                        )
-                    }
+                        val v = it.toFloatOrNull() ?: 0f
+                        onUpdateConfig { it.copy(minSpindleSpeed = v) }
                     },
                     label = "Min RPM",
                     modifier = Modifier.weight(1f),
@@ -170,11 +205,8 @@ fun CncConfigScreen(viewModel: CncConfigViewModel) {
                 IndustrialTextField(
                     value = config.maxFeedRate.toString(),
                     onValueChange = {
-                        val v = it.toFloatOrNull() ?: 0f; viewModel.updateConfig {
-                        it.copy(
-                            maxFeedRate = v
-                        )
-                    }
+                        val v = it.toFloatOrNull() ?: 0f
+                        onUpdateConfig { it.copy(maxFeedRate = v) }
                     },
                     label = "Max Feed",
                     modifier = Modifier.weight(1f),
@@ -183,11 +215,8 @@ fun CncConfigScreen(viewModel: CncConfigViewModel) {
                 IndustrialTextField(
                     value = config.defaultSeekRate.toString(),
                     onValueChange = {
-                        val v = it.toFloatOrNull() ?: 0f; viewModel.updateConfig {
-                        it.copy(
-                            defaultSeekRate = v
-                        )
-                    }
+                        val v = it.toFloatOrNull() ?: 0f
+                        onUpdateConfig { it.copy(defaultSeekRate = v) }
                     },
                     label = "Seek Rate",
                     modifier = Modifier.weight(1f),
@@ -224,7 +253,7 @@ fun CncConfigScreen(viewModel: CncConfigViewModel) {
                         FilterChip(
                             selected = profile?.connectionType == type,
                             onClick = {
-                                viewModel.updateProfile { it.copy(connectionType = type) }
+                                onUpdateProfile { it.copy(connectionType = type) }
                                 showTypeSelector = false
                                 showParamsSelector = true // Auto-expand technical params
                                 scope.launch {
@@ -243,17 +272,16 @@ fun CncConfigScreen(viewModel: CncConfigViewModel) {
                 HorizontalDivider(color = IndustrialColors.Border, thickness = 0.5.dp)
             }
 
-            // Level 3: Immediate Parameters & Discovery (No intermediate "Settings" row)
+            // Level 3: Immediate Parameters & Discovery
             if (profile?.connectionType != null) {
                 if (showParamsSelector) {
                     Column(
                         modifier = Modifier.padding(top = 16.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        when (profile?.connectionType) {
+                        when (profile.connectionType) {
                             ConnectionType.WIFI -> {
-                                val networks by viewModel.wifiNetworks.collectAsState()
-                                LaunchedEffect(Unit) { viewModel.startWifiScan() }
+                                LaunchedEffect(Unit) { onStartWifiScan() }
 
                                 Row(
                                     Modifier.fillMaxWidth(),
@@ -268,7 +296,7 @@ fun CncConfigScreen(viewModel: CncConfigViewModel) {
                                     )
                                     IndustrialButton(
                                         text = "Scan",
-                                        onClick = { viewModel.startWifiScan() },
+                                        onClick = onStartWifiScan,
                                         modifier = Modifier.height(32.dp),
                                         containerColor = IndustrialColors.Border
                                     )
@@ -281,7 +309,7 @@ fun CncConfigScreen(viewModel: CncConfigViewModel) {
                                         .border(1.dp, IndustrialColors.Border)
                                         .padding(4.dp)
                                 ) {
-                                    if (networks.isEmpty()) {
+                                    if (wifiNetworks.isEmpty()) {
                                         Text(
                                             "Searching for Wi-Fi...",
                                             color = IndustrialColors.TextSecondary,
@@ -289,12 +317,12 @@ fun CncConfigScreen(viewModel: CncConfigViewModel) {
                                             modifier = Modifier.padding(8.dp)
                                         )
                                     }
-                                    networks.take(5).forEach { net ->
+                                    wifiNetworks.take(5).forEach { net ->
                                         Row(
                                             modifier = Modifier
                                                 .fillMaxWidth()
                                                 .clickable {
-                                                    viewModel.updateConfig { it.copy(wifiSsid = net.SSID) }
+                                                    onUpdateConfig { it.copy(wifiSsid = net.SSID) }
                                                     scope.launch {
                                                         snackbarHost.currentSnackbarData?.dismiss()
                                                         snackbarHost.showSnackbar("Network: ${net.SSID}")
@@ -319,13 +347,9 @@ fun CncConfigScreen(viewModel: CncConfigViewModel) {
                                 }
 
                                 IndustrialTextField(
-                                    value = profile?.address ?: "",
+                                    value = profile.address,
                                     onValueChange = { addr ->
-                                        viewModel.updateProfile {
-                                            it.copy(
-                                                address = addr
-                                            )
-                                        }
+                                        onUpdateProfile { it.copy(address = addr) }
                                     },
                                     label = "Static IP / Hostname",
                                     modifier = Modifier.fillMaxWidth()
@@ -333,11 +357,7 @@ fun CncConfigScreen(viewModel: CncConfigViewModel) {
                                 IndustrialTextField(
                                     value = config.wifiSsid,
                                     onValueChange = { ssid ->
-                                        viewModel.updateConfig {
-                                            it.copy(
-                                                wifiSsid = ssid
-                                            )
-                                        }
+                                        onUpdateConfig { it.copy(wifiSsid = ssid) }
                                     },
                                     label = "Selected SSID",
                                     modifier = Modifier.fillMaxWidth()
@@ -346,11 +366,7 @@ fun CncConfigScreen(viewModel: CncConfigViewModel) {
                                     IndustrialTextField(
                                         value = config.httpEndpoint,
                                         onValueChange = { ep ->
-                                            viewModel.updateConfig {
-                                                it.copy(
-                                                    httpEndpoint = ep
-                                                )
-                                            }
+                                            onUpdateConfig { it.copy(httpEndpoint = ep) }
                                         },
                                         label = "API Path",
                                         modifier = Modifier.weight(1f)
@@ -358,11 +374,7 @@ fun CncConfigScreen(viewModel: CncConfigViewModel) {
                                     IndustrialTextField(
                                         value = config.wsEndpoint,
                                         onValueChange = { ep ->
-                                            viewModel.updateConfig {
-                                                it.copy(
-                                                    wsEndpoint = ep
-                                                )
-                                            }
+                                            onUpdateConfig { it.copy(wsEndpoint = ep) }
                                         },
                                         label = "WS Path",
                                         modifier = Modifier.weight(1f)
@@ -371,8 +383,7 @@ fun CncConfigScreen(viewModel: CncConfigViewModel) {
                             }
 
                             ConnectionType.BLUETOOTH -> {
-                                val devices by viewModel.bluetoothDevices.collectAsState()
-                                LaunchedEffect(Unit) { viewModel.startBluetoothScan() }
+                                LaunchedEffect(Unit) { onStartBluetoothScan() }
 
                                 Row(
                                     Modifier.fillMaxWidth(),
@@ -387,7 +398,7 @@ fun CncConfigScreen(viewModel: CncConfigViewModel) {
                                     )
                                     IndustrialButton(
                                         text = "Discover",
-                                        onClick = { viewModel.startBluetoothScan() },
+                                        onClick = onStartBluetoothScan,
                                         modifier = Modifier.height(32.dp),
                                         containerColor = IndustrialColors.Border
                                     )
@@ -400,7 +411,7 @@ fun CncConfigScreen(viewModel: CncConfigViewModel) {
                                         .border(1.dp, IndustrialColors.Border)
                                         .padding(4.dp)
                                 ) {
-                                    if (devices.isEmpty()) {
+                                    if (bluetoothDevices.isEmpty()) {
                                         Text(
                                             "Searching... Ensure Bluetooth is ON and permissions granted",
                                             color = IndustrialColors.Warning,
@@ -408,14 +419,14 @@ fun CncConfigScreen(viewModel: CncConfigViewModel) {
                                             modifier = Modifier.padding(8.dp)
                                         )
                                     }
-                                    devices.forEach { dev ->
+                                    bluetoothDevices.forEach { dev ->
                                         @SuppressLint("MissingPermission")
                                         val name = dev.name ?: "Unknown Device"
                                         Row(
                                             modifier = Modifier
                                                 .fillMaxWidth()
                                                 .clickable {
-                                                    viewModel.updateProfile { it.copy(address = dev.address) }
+                                                    onUpdateProfile { it.copy(address = dev.address) }
                                                     scope.launch {
                                                         snackbarHost.currentSnackbarData?.dismiss()
                                                         snackbarHost.showSnackbar("Device: $name")
@@ -440,13 +451,9 @@ fun CncConfigScreen(viewModel: CncConfigViewModel) {
                                 }
 
                                 IndustrialTextField(
-                                    value = profile?.address ?: "",
+                                    value = profile.address,
                                     onValueChange = { addr ->
-                                        viewModel.updateProfile {
-                                            it.copy(
-                                                address = addr
-                                            )
-                                        }
+                                        onUpdateProfile { it.copy(address = addr) }
                                     },
                                     label = "Manual MAC Address",
                                     modifier = Modifier.fillMaxWidth()
@@ -454,14 +461,9 @@ fun CncConfigScreen(viewModel: CncConfigViewModel) {
                             }
 
                             ConnectionType.USB -> {
-                                val descriptors by viewModel.usbDescriptors.collectAsState()
-                                val manualConfig by viewModel.manualUsbConfig.collectAsState()
+                                LaunchedEffect(Unit) { onStartUsbDiscovery() }
 
-                                LaunchedEffect(Unit) {
-                                    viewModel.startUsbDiscovery()
-                                }
-
-                                if (descriptors.isEmpty()) {
+                                if (usbDescriptors.isEmpty()) {
                                     Column(
                                         horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
                                         modifier = Modifier
@@ -477,12 +479,12 @@ fun CncConfigScreen(viewModel: CncConfigViewModel) {
                                         Spacer(Modifier.height(12.dp))
                                         IndustrialButton(
                                             "Verify physical connection",
-                                            onClick = { viewModel.startUsbDiscovery() },
+                                            onClick = onStartUsbDiscovery,
                                             modifier = Modifier.fillMaxWidth()
                                         )
                                     }
                                 } else {
-                                    descriptors.forEach { desc ->
+                                    usbDescriptors.forEach { desc ->
                                         Column(
                                             modifier = Modifier
                                                 .fillMaxWidth()
@@ -551,13 +553,19 @@ fun CncConfigScreen(viewModel: CncConfigViewModel) {
 
                                                 if (desc.deviceClass == -1) {
                                                     IndustrialTextField(
-                                                        value = manualConfig.deviceClass.takeIf { it != -1 }
+                                                        value = manualUsbConfig.deviceClass.takeIf { it != -1 }
                                                             ?.toString() ?: "",
                                                         onValueChange = {
-                                                            viewModel.updateManualUsb { u ->
-                                                                it.toIntOrNull()
-                                                                    ?.let { v -> u.copy(deviceClass = v) }
-                                                                    ?: u.copy(deviceClass = -1)
+                                                            it.toIntOrNull()?.let { v ->
+                                                                onUpdateManualUsb {
+                                                                    it.copy(
+                                                                        deviceClass = v
+                                                                    )
+                                                                }
+                                                            } ?: onUpdateManualUsb {
+                                                                it.copy(
+                                                                    deviceClass = -1
+                                                                )
                                                             }
                                                         },
                                                         label = "USB Device Class",
@@ -568,13 +576,19 @@ fun CncConfigScreen(viewModel: CncConfigViewModel) {
                                                 }
                                                 if (desc.interfaceIndex == -1) {
                                                     IndustrialTextField(
-                                                        value = manualConfig.interfaceIndex.takeIf { it != -1 }
+                                                        value = manualUsbConfig.interfaceIndex.takeIf { it != -1 }
                                                             ?.toString() ?: "",
                                                         onValueChange = {
-                                                            viewModel.updateManualUsb { u ->
-                                                                it.toIntOrNull()?.let { v ->
-                                                                    u.copy(interfaceIndex = v)
-                                                                } ?: u.copy(interfaceIndex = -1)
+                                                            it.toIntOrNull()?.let { v ->
+                                                                onUpdateManualUsb { u ->
+                                                                    u.copy(
+                                                                        interfaceIndex = v
+                                                                    )
+                                                                }
+                                                            } ?: onUpdateManualUsb { u ->
+                                                                u.copy(
+                                                                    interfaceIndex = -1
+                                                                )
                                                             }
                                                         },
                                                         label = "Interface Index",
@@ -590,13 +604,19 @@ fun CncConfigScreen(viewModel: CncConfigViewModel) {
                                                         )
                                                     ) {
                                                         IndustrialTextField(
-                                                            value = manualConfig.inputEndpoint.takeIf { it != -1 }
+                                                            value = manualUsbConfig.inputEndpoint.takeIf { it != -1 }
                                                                 ?.toString() ?: "",
                                                             onValueChange = {
-                                                                viewModel.updateManualUsb { u ->
-                                                                    it.toIntOrNull()?.let { v ->
-                                                                        u.copy(inputEndpoint = v)
-                                                                    } ?: u.copy(inputEndpoint = -1)
+                                                                it.toIntOrNull()?.let { v ->
+                                                                    onUpdateManualUsb { u ->
+                                                                        u.copy(
+                                                                            inputEndpoint = v
+                                                                        )
+                                                                    }
+                                                                } ?: onUpdateManualUsb { u ->
+                                                                    u.copy(
+                                                                        inputEndpoint = -1
+                                                                    )
                                                                 }
                                                             },
                                                             label = "Input EP",
@@ -606,13 +626,19 @@ fun CncConfigScreen(viewModel: CncConfigViewModel) {
                                                             )
                                                         )
                                                         IndustrialTextField(
-                                                            value = manualConfig.outputEndpoint.takeIf { it != -1 }
+                                                            value = manualUsbConfig.outputEndpoint.takeIf { it != -1 }
                                                                 ?.toString() ?: "",
                                                             onValueChange = {
-                                                                viewModel.updateManualUsb { u ->
-                                                                    it.toIntOrNull()?.let { v ->
-                                                                        u.copy(outputEndpoint = v)
-                                                                    } ?: u.copy(outputEndpoint = -1)
+                                                                it.toIntOrNull()?.let { v ->
+                                                                    onUpdateManualUsb { u ->
+                                                                        u.copy(
+                                                                            outputEndpoint = v
+                                                                        )
+                                                                    }
+                                                                } ?: onUpdateManualUsb { u ->
+                                                                    u.copy(
+                                                                        outputEndpoint = -1
+                                                                    )
                                                                 }
                                                             },
                                                             label = "Output EP",
@@ -632,16 +658,14 @@ fun CncConfigScreen(viewModel: CncConfigViewModel) {
                                 IndustrialTextField(
                                     value = config.baudRate.toString(),
                                     onValueChange = {
-                                        val v = it.toIntOrNull()
-                                            ?: 115200; viewModel.updateConfig { it.copy(baudRate = v) }
+                                        val v = it.toIntOrNull() ?: 115200
+                                        onUpdateConfig { it.copy(baudRate = v) }
                                     },
                                     label = "Serial Baud Rate",
                                     modifier = Modifier.fillMaxWidth(),
                                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                                 )
                             }
-
-                            else -> {}
                         }
                     }
                 }
@@ -650,16 +674,46 @@ fun CncConfigScreen(viewModel: CncConfigViewModel) {
 
         IndustrialButton(
             text = "Save Settings",
-            onClick = { viewModel.saveConfiguration() },
+            onClick = onSave,
             modifier = Modifier.fillMaxWidth(),
             containerColor = IndustrialColors.Success
         )
 
         IndustrialButton(
             text = "Factory Reset (Defaults)",
-            onClick = { viewModel.factoryReset() },
+            onClick = onFactoryReset,
             modifier = Modifier.fillMaxWidth(),
             containerColor = IndustrialColors.Emergency
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun CncConfigPreview() {
+    _3dCncTheme {
+        CncConfigContent(
+            config = MachineConfig(),
+            profile = MachineProfile(
+                id = "1",
+                name = "Test CNC",
+                connectionType = ConnectionType.WIFI,
+                address = "192.168.1.100",
+                firmware = com.example.cnc3d.core.detection.FirmwareType.FLUIDNC
+            ),
+            uiMessage = "",
+            wifiNetworks = emptyList(),
+            bluetoothDevices = emptyList(),
+            usbDescriptors = emptyList(),
+            manualUsbConfig = UsbDescriptor(0, 0),
+            onUpdateProfile = {},
+            onUpdateConfig = {},
+            onSave = {},
+            onFactoryReset = {},
+            onStartUsbDiscovery = {},
+            onUpdateManualUsb = {},
+            onStartWifiScan = {},
+            onStartBluetoothScan = {}
         )
     }
 }

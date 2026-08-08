@@ -1,6 +1,9 @@
 package com.example.cnc3d.ui.connection
 
 import android.Manifest
+import android.bluetooth.BluetoothDevice
+import android.net.nsd.NsdServiceInfo
+import android.net.wifi.ScanResult
 import androidx.annotation.RequiresPermission
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -26,19 +29,44 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.cnc3d.core.network.ConnectionType
+import com.example.cnc3d.ui.theme._3dCncTheme
 import com.example.cnc3d.viewmodels.ConnectionViewModel
 
 @Composable
 fun ConnectionScreen(vm: ConnectionViewModel) {
-
-    var address by remember { mutableStateOf("") }
     val status by vm.status.collectAsState()
     val transport by vm.selectedTransport.collectAsState()
     val discoveredNetwork by vm.discoveredNetwork.collectAsState()
     val discoveredBluetooth by vm.discoveredBluetooth.collectAsState()
     val discoveredWifi by vm.discoveredWifi.collectAsState()
+
+    ConnectionContent(
+        status = status,
+        transport = transport,
+        discoveredNetwork = discoveredNetwork,
+        discoveredBluetooth = discoveredBluetooth,
+        discoveredWifi = discoveredWifi,
+        onSetTransport = { vm.setTransport(it) },
+        onConnect = { vm.connect(it) },
+        onStartDiscovery = { vm.startDiscovery() }
+    )
+}
+
+@Composable
+fun ConnectionContent(
+    status: String,
+    transport: ConnectionType,
+    discoveredNetwork: List<NsdServiceInfo>,
+    discoveredBluetooth: List<BluetoothDevice>,
+    discoveredWifi: List<ScanResult>,
+    onSetTransport: (ConnectionType) -> Unit,
+    onConnect: (String) -> Unit,
+    onStartDiscovery: () -> Unit
+) {
+    var address by remember { mutableStateOf("") }
 
     Column(Modifier.padding(16.dp)) {
 
@@ -51,7 +79,7 @@ fun ConnectionScreen(vm: ConnectionViewModel) {
             ConnectionType.entries.forEach { type ->
                 FilterChip(
                     selected = transport == type,
-                    onClick = { vm.setTransport(type) },
+                    onClick = { onSetTransport(type) },
                     label = { Text(type.name) }
                 )
             }
@@ -75,10 +103,10 @@ fun ConnectionScreen(vm: ConnectionViewModel) {
         Spacer(Modifier.height(16.dp))
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = { vm.connect(address) }) {
+            Button(onClick = { onConnect(address) }) {
                 Text("Connect")
             }
-            Button(onClick = { vm.startDiscovery() }) {
+            Button(onClick = { onStartDiscovery() }) {
                 Text("Discover Devices")
             }
         }
@@ -94,8 +122,10 @@ fun ConnectionScreen(vm: ConnectionViewModel) {
                     items(discoveredNetwork) { service ->
                         ListItem(
                             headlineContent = { Text(service.serviceName) },
-                            supportingContent = { Text(service.host.hostAddress ?: "") },
-                            modifier = Modifier.clickable { address = service.host.hostAddress ?: "" }
+                            supportingContent = { Text(service.host?.hostAddress ?: "") },
+                            modifier = Modifier.clickable {
+                                address = service.host?.hostAddress ?: ""
+                            }
                         )
                     }
                     item { HorizontalDivider(Modifier.padding(vertical = 8.dp)) }
@@ -130,5 +160,22 @@ fun ConnectionScreen(vm: ConnectionViewModel) {
         Spacer(Modifier.height(16.dp))
 
         Text("Status: $status")
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun ConnectionPreview() {
+    _3dCncTheme {
+        ConnectionContent(
+            status = "Disconnected",
+            transport = ConnectionType.WIFI,
+            discoveredNetwork = emptyList(),
+            discoveredBluetooth = emptyList(),
+            discoveredWifi = emptyList(),
+            onSetTransport = {},
+            onConnect = {},
+            onStartDiscovery = {}
+        )
     }
 }

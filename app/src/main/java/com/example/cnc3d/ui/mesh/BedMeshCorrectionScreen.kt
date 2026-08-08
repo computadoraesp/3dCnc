@@ -10,14 +10,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.cnc3d.ui.theme._3dCncTheme
 import com.example.cnc3d.viewmodels.BedMeshCorrectionViewModel
 
 @Composable
 fun BedMeshCorrectionScreen(vm: BedMeshCorrectionViewModel) {
-
     val corrected by vm.corrected.collectAsState()
+    BedMeshCorrectionContent(corrected = corrected)
+}
 
+@Composable
+fun BedMeshCorrectionContent(corrected: List<String>) {
     Column(Modifier.padding(16.dp)) {
 
         Text("Bed Mesh Correction", style = MaterialTheme.typography.headlineSmall)
@@ -27,5 +32,15 @@ fun BedMeshCorrectionScreen(vm: BedMeshCorrectionViewModel) {
         corrected.forEach { line ->
             Text(line)
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun BedMeshCorrectionPreview() {
+    _3dCncTheme {
+        BedMeshCorrectionContent(
+            corrected = listOf("G1 X10 Y10 Z0.15", "G1 X20 Y10 Z0.12", "G1 X20 Y20 Z0.18")
+        )
     }
 }

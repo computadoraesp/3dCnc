@@ -15,21 +15,34 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.cnc3d.domain.models.Mesh
+import com.example.cnc3d.domain.models.MeshPoint
+import com.example.cnc3d.ui.theme._3dCncTheme
 import com.example.cnc3d.viewmodels.MeshViewModel
 
 @Composable
 fun Mesh2DScreen(vm: MeshViewModel) {
-
     val mesh by vm.mesh.collectAsState()
+    Mesh2DContent(
+        mesh = mesh,
+        onLoadMesh = { vm.loadMesh() }
+    )
+}
 
+@Composable
+fun Mesh2DContent(
+    mesh: Mesh?,
+    onLoadMesh: () -> Unit
+) {
     Column(Modifier.padding(16.dp)) {
 
         Text("Mesh 2D", style = MaterialTheme.typography.headlineSmall)
 
         Spacer(Modifier.height(16.dp))
 
-        Button(onClick = { vm.loadMesh() }) {
+        Button(onClick = onLoadMesh) {
             Text("Load Mesh")
         }
 
@@ -44,5 +57,22 @@ fun Mesh2DScreen(vm: MeshViewModel) {
                 )
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun Mesh2DScreenPreview() {
+    _3dCncTheme {
+        Mesh2DContent(
+            mesh = Mesh(
+                points = listOf(
+                    MeshPoint(10f, 10f, 0f),
+                    MeshPoint(50f, 20f, 0f),
+                    MeshPoint(100f, 80f, 0f)
+                )
+            ),
+            onLoadMesh = {}
+        )
     }
 }

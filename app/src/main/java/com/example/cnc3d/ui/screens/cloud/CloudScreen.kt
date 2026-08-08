@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -20,6 +21,7 @@ import com.example.cnc3d.ui.theme.IndustrialButton
 import com.example.cnc3d.ui.theme.IndustrialColors
 import com.example.cnc3d.ui.theme.IndustrialInfoPanel
 import com.example.cnc3d.ui.theme.IndustrialPanel
+import com.example.cnc3d.ui.theme._3dCncTheme
 import com.example.cnc3d.viewmodels.CloudViewModel
 
 @Composable
@@ -31,6 +33,27 @@ fun CloudScreen(
     val lastSync by viewModel.lastSync.collectAsState()
     val pendingCount by viewModel.pendingCount.collectAsState()
 
+    CloudContent(
+        status = status,
+        lastSync = lastSync,
+        pendingCount = pendingCount,
+        onUploadAll = { viewModel.uploadFiles() },
+        onSyncRemote = { viewModel.sync() },
+        onDownload = { viewModel.downloadFiles() },
+        onWipeCache = { viewModel.clearCache() }
+    )
+}
+
+@Composable
+fun CloudContent(
+    status: String,
+    lastSync: String,
+    pendingCount: Int,
+    onUploadAll: () -> Unit,
+    onSyncRemote: () -> Unit,
+    onDownload: () -> Unit,
+    onWipeCache: () -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -53,13 +76,13 @@ fun CloudScreen(
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 IndustrialButton(
                     text = "Upload All",
-                    onClick = { viewModel.uploadFiles() },
+                    onClick = onUploadAll,
                     modifier = Modifier.weight(1f),
                     containerColor = IndustrialColors.Success
                 )
                 IndustrialButton(
                     text = "Sync Remote",
-                    onClick = { viewModel.sync() },
+                    onClick = onSyncRemote,
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -67,13 +90,13 @@ fun CloudScreen(
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 IndustrialButton(
                     text = "Download",
-                    onClick = { viewModel.downloadFiles() },
+                    onClick = onDownload,
                     modifier = Modifier.weight(1f),
                     containerColor = IndustrialColors.Border
                 )
                 IndustrialButton(
                     text = "Wipe Cache",
-                    onClick = { viewModel.clearCache() },
+                    onClick = onWipeCache,
                     modifier = Modifier.weight(1f),
                     containerColor = IndustrialColors.Emergency
                 )
@@ -92,5 +115,21 @@ fun CloudScreen(
                 style = MaterialTheme.typography.labelSmall
             )
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun CloudPreview() {
+    _3dCncTheme {
+        CloudContent(
+            status = "Online",
+            lastSync = "10 minutes ago",
+            pendingCount = 3,
+            onUploadAll = {},
+            onSyncRemote = {},
+            onDownload = {},
+            onWipeCache = {}
+        )
     }
 }

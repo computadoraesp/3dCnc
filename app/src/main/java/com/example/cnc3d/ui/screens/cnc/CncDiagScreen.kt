@@ -17,14 +17,17 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.cnc3d.domain.models.cnc.CncStatus
 import com.example.cnc3d.ui.theme.IndustrialColors
 import com.example.cnc3d.ui.theme.IndustrialExpandableModule
 import com.example.cnc3d.ui.theme.IndustrialInfoPanel
 import com.example.cnc3d.ui.theme.IndustrialLed
 import com.example.cnc3d.ui.theme.IndustrialLedStrip
 import com.example.cnc3d.ui.theme.LedState
+import com.example.cnc3d.ui.theme._3dCncTheme
 import com.example.cnc3d.viewmodels.CncDiagViewModel
 
 @Composable
@@ -33,6 +36,14 @@ fun CncDiagScreen(
     onShowInfo: (String) -> Unit = {}
 ) {
     val status by viewModel.status.collectAsState()
+    CncDiagContent(status = status, onShowInfo = onShowInfo)
+}
+
+@Composable
+fun CncDiagContent(
+    status: CncStatus,
+    onShowInfo: (String) -> Unit = {}
+) {
     val scrollState = rememberScrollState()
 
     Column(
@@ -281,6 +292,26 @@ fun CncDiagScreen(
                 )
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun CncDiagPreview() {
+    _3dCncTheme {
+        CncDiagContent(
+            status = CncStatus(
+                state = "Idle",
+                sensors = mapOf(
+                    "x_min" to false,
+                    "x_max" to false,
+                    "e_stop" to false,
+                    "probe" to false
+                ),
+                firmwareVersion = "v1.2.3",
+                uptime = "01:23:45"
+            )
+        )
     }
 }
 

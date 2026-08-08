@@ -2,21 +2,41 @@ package com.example.cnc3d.ui.screens.analyzer
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Settings
-import androidx.navigation.NavHostController
-import com.example.cnc3d.viewmodels.DiagnosticsViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
 import com.example.cnc3d.domain.usecases.DiagnosticsData
+import com.example.cnc3d.ui.theme._3dCncTheme
+import com.example.cnc3d.viewmodels.DiagnosticsViewModel
 
 @Composable
 fun AnalyzerScreen(
@@ -26,6 +46,21 @@ fun AnalyzerScreen(
     val data by viewModel.data.collectAsState()
     val isRunning by viewModel.isRecording.collectAsState()
 
+    AnalyzerContent(
+        status = if (isRunning) "Scanning..." else "Diagnostics Active",
+        data = data,
+        onNavigateSettings = { navController.navigate("settings") },
+        onRunDiagnostics = { viewModel.runDiagnostics() }
+    )
+}
+
+@Composable
+fun AnalyzerContent(
+    status: String,
+    data: DiagnosticsData,
+    onNavigateSettings: () -> Unit,
+    onRunDiagnostics: () -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -34,16 +69,16 @@ fun AnalyzerScreen(
         verticalArrangement = Arrangement.spacedBy(32.dp)
     ) {
 
-        AnalyzerHeader(navController, if (isRunning) "Scanning..." else "Diagnostics Active")
+        AnalyzerHeader(status, onNavigateSettings)
 
         AnalyzerMetrics(data)
 
-        AnalyzerTools(viewModel)
+        AnalyzerTools(onRunDiagnostics)
     }
 }
 
 @Composable
-private fun AnalyzerHeader(navController: NavHostController, status: String) {
+private fun AnalyzerHeader(status: String, onNavigateSettings: () -> Unit) {
 
     Row(
         modifier = Modifier
@@ -68,7 +103,7 @@ private fun AnalyzerHeader(navController: NavHostController, status: String) {
             )
         }
 
-        IconButton(onClick = { navController.navigate("settings") }) {
+        IconButton(onClick = onNavigateSettings) {
             Icon(
                 imageVector = Icons.Default.Settings,
                 contentDescription = "Settings",
@@ -110,7 +145,7 @@ private fun Metric(label: String, value: String, color: Color) {
 }
 
 @Composable
-private fun AnalyzerTools(viewModel: DiagnosticsViewModel) {
+private fun AnalyzerTools(onRunDiagnostics: () -> Unit) {
 
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -121,7 +156,7 @@ private fun AnalyzerTools(viewModel: DiagnosticsViewModel) {
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            AnalyzerButton("Run Diagnostics", Color(0xFF4CAF50)) { viewModel.runDiagnostics() }
+            AnalyzerButton("Run Diagnostics", Color(0xFF4CAF50)) { onRunDiagnostics() }
             AnalyzerButton("Export Report", Color(0xFF00BCD4)) { /* Export logic */ }
         }
 
@@ -132,6 +167,25 @@ private fun AnalyzerTools(viewModel: DiagnosticsViewModel) {
             AnalyzerButton("Check Sensors", Color(0xFFFFC107))
             AnalyzerButton("System Logs", Color(0xFFE53935))
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun AnalyzerPreview() {
+    _3dCncTheme {
+        AnalyzerContent(
+            status = "Diagnostics Active",
+            data = DiagnosticsData(
+                cpuLoad = 45,
+                ramUsage = 62,
+                networkLatency = 12,
+                diskIO = "12 MB/s",
+                temperature = "48°C"
+            ),
+            onNavigateSettings = {},
+            onRunDiagnostics = {}
+        )
     }
 }
 
